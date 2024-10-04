@@ -4,7 +4,19 @@ import plotly.io as pio
 import plotly.graph_objects as go
 import streamlit as st
 import matplotlib.pyplot as plt  
-import seaborn as sns        
+import seaborn as sns 
+# Activate virtual environment
+source /home/adminuser/venv/bin/activate
+
+# Install Plotly
+pip install plotly
+
+# Verify installation
+pip show plotly
+
+# Run Streamlit app
+streamlit run bikeAnalysis.py
+
 pio.templates.default = "plotly_white"
 
 st.title('Analisis Penggunaan Sepeda')
@@ -14,30 +26,22 @@ data_hour = pd.read_csv("hour.csv")
 
 data = pd.concat([data_day, data_hour], ignore_index=True)
 
-print(data.head())
-
-print("Dimensi Data (Rows, Columns):", data.shape)
-
-print("\nInformasi Data:")
-print(data.info())
-
-print("\nLima Baris Pertama dari Data:")
-print(data.head())
-
-print("\nStatistik Deskriptif:")
-print(data.describe())
-
-print("\nJumlah Missing Values per Kolom:")
-print(data.isnull().sum())
-
-print("\nJumlah Nilai Unik per Kolom:")
-print(data.nunique())
+st.write("Lima Baris Pertama dari Data:")
+st.write(data.head())
+st.write("Dimensi Data (Rows, Columns):", data.shape)
+st.write("Informasi Data:")
+st.write(data.info())
+st.write("Statistik Deskriptif:")
+st.write(data.describe())
+st.write("Jumlah Missing Values per Kolom:")
+st.write(data.isnull().sum())
+st.write("Jumlah Nilai Unik per Kolom:")
+st.write(data.nunique())
 
 if 'Unnamed' in data.columns:
     data = data.drop(columns=['Unnamed'])
 
 data_cleaned = data.dropna()
-
 data_cleaned = data_cleaned.drop_duplicates()
 
 if 'PM2.5' in data_cleaned.columns:
@@ -45,16 +49,17 @@ if 'PM2.5' in data_cleaned.columns:
 
 data_cleaned = data_cleaned.dropna(axis=1, how='all')
 
-print(data_cleaned.head())
+st.write("Lima Baris Pertama Data Bersih:")
+st.write(data_cleaned.head())
 
-print("\nKorelasi Antar Variabel Numerik:")
+st.write("Korelasi Antar Variabel Numerik:")
 corr_matrix = data.corr()
-print(corr_matrix)
+st.write(corr_matrix)
 
 plt.figure(figsize=(10, 8))
 sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
 plt.title('Korelasi Antar Variabel Numerik')
-plt.show()
+st.pyplot()
 
 st.write("Data Awal:")
 st.write(data.head())
