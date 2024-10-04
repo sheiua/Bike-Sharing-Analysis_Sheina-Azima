@@ -5,17 +5,6 @@ import plotly.graph_objects as go
 import streamlit as st
 import matplotlib.pyplot as plt  
 import seaborn as sns 
-# Activate virtual environment
-source /home/adminuser/venv/bin/activate
-
-# Install Plotly
-pip install plotly
-
-# Verify installation
-pip show plotly
-
-# Run Streamlit app
-streamlit run bikeAnalysis.py
 
 pio.templates.default = "plotly_white"
 
