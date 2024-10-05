@@ -136,17 +136,18 @@ try:
     windspeed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
     season = st.selectbox("Season", ['spring', 'summer', 'fall', 'winter'])
 
-    # Encode season untuk input pengguna
-    season_dummies = pd.get_dummies([season], columns=['season'], drop_first=True)
-    season_dummies = season_dummies.reindex(columns=['season_summer', 'season_fall', 'season_winter'], fill_value=0)
-
-    # Data input baru
+    # Buat DataFrame untuk data input baru
     new_data = pd.DataFrame({
         'temp': [temp],
         'hum': [hum],
         'windspeed': [windspeed]
     })
 
+    # Encode season untuk input pengguna
+    season_dummies = pd.get_dummies([season], prefix='season', drop_first=True)
+    season_dummies = season_dummies.reindex(columns=['season_summer', 'season_fall', 'season_winter'], fill_value=0)
+
+    # Gabungkan data input baru dengan dummies
     new_data = pd.concat([new_data, season_dummies], axis=1)
 
     # Normalisasi data input baru
