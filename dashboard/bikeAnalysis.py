@@ -10,10 +10,11 @@ pio.templates.default = "plotly_white"
 
 st.title('Analisis Penggunaan Sepeda')
 
-data_day = pd.read_csv("day.csv")
+data_day = pd.read_csv("C:/Users/User/Downloads/Bike Sharing Analysis/day.csv")
 data_hour = pd.read_csv("hour.csv")
 
 data = pd.concat([data_day, data_hour], ignore_index=True)
+
 
 st.write("Lima Baris Pertama dari Data:")
 st.write(data.head())
