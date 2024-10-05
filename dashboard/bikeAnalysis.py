@@ -33,7 +33,6 @@ except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
     st.stop()
 
-# Membaca file hour.csv
 try:
     data_hour = pd.read_csv(file_path_hour)
     st.write("Data jam berhasil dimuat.")
@@ -47,16 +46,13 @@ except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
     st.stop()
 
-# Menggabungkan data dari kedua file
 try:
     data = pd.concat([data_day, data_hour], ignore_index=True)
 
-    # Mengubah kolom 'date' menjadi datetime jika ada
     if 'date' in data.columns:
         data['date'] = pd.to_datetime(data['date'], errors='coerce')
         data.dropna(subset=['date'], inplace=True)
 
-    # Pastikan kolom numerik lainnya tidak mengandung string
     numeric_columns = data.select_dtypes(include=['object']).columns
     for col in numeric_columns:
         try:
@@ -64,14 +60,11 @@ try:
         except Exception as e:
             st.error(f"Kesalahan saat mengonversi kolom {col}: {e}")
 
-    # Membersihkan data
     data_cleaned = data.dropna().drop_duplicates()
 
-    # Memeriksa info DataFrame
     st.write("Informasi DataFrame:")
     st.write(data_cleaned.info())
 
-    # Korelasi variabel numerik
     if not data_cleaned.select_dtypes(include=['number']).empty:
         corr_matrix = data_cleaned.corr()
         st.write("Korelasi Antar Variabel Numerik:")
@@ -82,12 +75,10 @@ try:
     else:
         st.error("Data bersih tidak memiliki kolom numerik untuk menghitung korelasi.")
 
-    # Analisis jumlah pengguna kasual vs terdaftar
     st.subheader("Jumlah Pengguna Kasual vs Terdaftar")
     st.write("Total Pengguna Kasual:", data['casual'].sum())
     st.write("Total Pengguna Terdaftar:", data['registered'].sum())
 
-    # Analisis penggunaan sepeda pada hari kerja vs hari libur
     st.subheader("Perbandingan Penggunaan Sepeda antara Hari Kerja dan Hari Libur")
     total_users_by_working_day = data.groupby('workingday')['cnt'].sum().reset_index()
 
@@ -98,79 +89,62 @@ try:
                   labels={'workingday': 'Hari Kerja', 'cnt': 'Total Pengguna'})
     st.plotly_chart(fig3)
 
-    # Clustering
     st.subheader("Clustering Penggunaan Sepeda berdasarkan Faktor Lingkungan dan Musim")
-    
-    # Pilih fitur yang relevan untuk clustering
+
     features = data[['temp', 'hum', 'windspeed', 'season']]
-    
-    # One-hot encoding untuk season (musim)
+
     features = pd.get_dummies(features, columns=['season'], drop_first=True)
 
-    # Normalisasi fitur
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(features)
 
-    # K-Means clustering
     kmeans = KMeans(n_clusters=4, random_state=42)
     data['cluster'] = kmeans.fit_predict(features_scaled)
 
-    # Visualisasi clustering
     plt.figure(figsize=(10, 6))
     sns.scatterplot(data=data, x='temp', y='cnt', hue='cluster', palette='viridis')
     plt.title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
     st.pyplot(plt.gcf())
 
-    # Menyimpan nama kolom yang digunakan untuk pelatihan
     feature_names = features.columns.tolist()
 
-    # Prediksi cluster untuk input baru dari pengguna
     st.subheader("Prediksi Cluster untuk Input Baru")
     temp = st.number_input("Temperature (°C)", min_value=-10.0, max_value=50.0, value=20.0)
     hum = st.number_input("Humidity (%)", min_value=0, max_value=100, value=30)
     windspeed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
     season = st.selectbox("Season", ['spring', 'summer', 'fall', 'winter'])
 
-    # Buat DataFrame untuk data input baru
     new_data = pd.DataFrame({
         'temp': [temp],
         'hum': [hum],
         'windspeed': [windspeed]
     })
 
-    # Encode season untuk input pengguna
     season_dummies = pd.get_dummies([season], prefix='season', drop_first=True)
     season_dummies = season_dummies.reindex(columns=['season_summer', 'season_fall', 'season_winter'], fill_value=0)
 
-    # Gabungkan data input baru dengan dummies
     new_data = pd.concat([new_data, season_dummies], axis=1)
 
-    # Pastikan semua kolom fitur yang digunakan untuk pelatihan ada
     for col in feature_names:
         if col not in new_data.columns:
             new_data[col] = 0
 
-    # Normalisasi data input baru
     new_data_scaled = scaler.transform(new_data[feature_names])
 
-    # Prediksi cluster
     predicted_cluster = kmeans.predict(new_data_scaled)
     st.write(f"Data baru diprediksi berada di cluster: {predicted_cluster[0]}")
 
     st.write("Lima contoh dari cluster yang sama:")
     st.write(data[data['cluster'] == predicted_cluster[0]].sample(5))
 
-    # Menyimpan model KMeans untuk digunakan di lain waktu (opsional)
     import joblib
     joblib.dump(kmeans, 'kmeans_model.pkl')
     st.write("Model KMeans telah disimpan.")
 
-    # Membaca kembali model KMeans (opsional)
     if st.button("Muat KMeans Model"):
         loaded_kmeans = joblib.load('kmeans_model.pkl')
         st.write("Model KMeans berhasil dimuat.")
 
-    # Visualisasi lain
     st.subheader("Visualisasi Jumlah Penyewaan per Musim")
     rental_per_season = data.groupby('season')['cnt'].sum().reset_index()
     fig_season = px.bar(rental_per_season, 
@@ -180,7 +154,6 @@ try:
                         labels={'season': 'Musim', 'cnt': 'Total Penyewaan'})
     st.plotly_chart(fig_season)
 
-    # Menyimpan data bersih ke file CSV
     cleaned_file_path = os.path.join("dashboard", "cleaned_data.csv")
     data_cleaned.to_csv(cleaned_file_path, index=False)
     st.write(f"Data bersih disimpan di: {cleaned_file_path}")
