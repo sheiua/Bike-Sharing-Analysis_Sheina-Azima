@@ -12,14 +12,11 @@ pio.templates.default = "plotly_white"
 
 st.title('Analisis Penggunaan Sepeda dan Clustering')
 
-# Menampilkan direktori kerja saat ini
 st.write("Current Working Directory: ", os.getcwd())
 
-# Jalur ke file CSV
 file_path_day = os.path.join("dashboard", "day.csv")
 file_path_hour = os.path.join("dashboard", "hour.csv")
 
-# Membaca file day.csv
 try:
     data_day = pd.read_csv(file_path_day)
     st.write("Data hari berhasil dimuat.")
