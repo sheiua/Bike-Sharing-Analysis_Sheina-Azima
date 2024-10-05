@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.io as pio
 import streamlit as st
@@ -9,7 +8,7 @@ import os
 
 pio.templates.default = "plotly_white"
 
-st.title('Analisis dan Prediksi Penggunaan Sepeda')
+st.title('Analisis Penggunaan Sepeda')
 
 # Menampilkan direktori kerja saat ini
 st.write("Current Working Directory: ", os.getcwd())
@@ -46,24 +45,45 @@ except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
     st.stop()
 
-# Menggabungkan data
+# Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
 try:
     data = pd.concat([data_day, data_hour], ignore_index=True)
 
-    # Membersihkan data
+    # Periksa dan ubah kolom tanggal jika ada
+    if 'date' in data.columns:
+        data['date'] = pd.to_datetime(data['date'], errors='coerce')  # Ubah menjadi datetime
+        data.dropna(subset=['date'], inplace=True)
+
+    # Pastikan kolom numerik lainnya tidak mengandung string
+    numeric_columns = data.select_dtypes(include=['object']).columns
+    for col in numeric_columns:
+        try:
+            data[col] = pd.to_numeric(data[col], errors='coerce')  # Coba konversi ke numerik
+        except Exception as e:
+            st.error(f"Kesalahan saat mengonversi kolom {col}: {e}")
+
+    # Tampilkan informasi dan analisis data
+    st.write("Lima Baris Pertama dari Data:")
+    st.write(data.head())
+    st.write("Dimensi Data (Rows, Columns):", data.shape)
+    st.write("Informasi Data:")
+    st.write(data.info())
+    st.write("Statistik Deskriptif:")
+    st.write(data.describe())
+    st.write("Jumlah Missing Values per Kolom:")
+    st.write(data.isnull().sum())
+    st.write("Jumlah Nilai Unik per Kolom:")
+    st.write(data.nunique())
+
     if 'Unnamed' in data.columns:
         data = data.drop(columns=['Unnamed'])
 
     data_cleaned = data.dropna()
     data_cleaned = data_cleaned.drop_duplicates()
 
-    # Tampilkan informasi dan analisis data
-    st.write("Lima Baris Pertama dari Data:")
-    st.write(data_cleaned.head())
-    
-    # Cek kolom numerik dan korelasi
+    # Pastikan ada kolom numerik sebelum menghitung korelasi
     if not data_cleaned.select_dtypes(include=['number']).empty:
-        corr_matrix = data_cleaned.corr()
+        corr_matrix = data_cleaned.corr()  # Menggunakan data_cleaned untuk korelasi
         st.write("Korelasi Antar Variabel Numerik:")
         st.write(corr_matrix)
 
@@ -77,23 +97,46 @@ try:
     st.write("Data Awal:")
     st.write(data.head())
 
-    # Hitung rata-rata untuk memberikan prediksi sederhana
-    average_rental_count = data_cleaned['rental_count'].mean()
-    st.write(f"Rata-rata jumlah sewa sepeda: {average_rental_count:.2f}")
+    st.subheader("Jumlah Pengguna Kasual vs Terdaftar")
+    st.write("Total Pengguna Kasual:", data['casual'].sum())
+    st.write("Total Pengguna Terdaftar:", data['registered'].sum())
 
-    # Streamlit app untuk prediksi sederhana
-    st.subheader("Prediksi Jumlah Sewa Sepeda (Sederhana)")
+    st.subheader("Perbandingan Penggunaan Sepeda antara Hari Kerja dan Hari Libur")
+    total_users_by_working_day = data.groupby('workingday')['cnt'].sum().reset_index()
 
-    # User input untuk fitur
-    temperature = st.number_input("Temperature (°C)", min_value=-30.0, max_value=50.0, value=20.0)
-    humidity = st.number_input("Humidity (%)", min_value=0, max_value=100, value=30)
-    wind_speed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
-    season = st.selectbox("Season", ['spring', 'summer', 'fall', 'winter'])
+    st.write("Total Pengguna Berdasarkan Hari Kerja dan Hari Libur:")
+    st.write(total_users_by_working_day)
 
-    # Prediction button
-    if st.button("Predict"):
-        # Menggunakan rata-rata sebagai prediksi sederhana
-        st.write(f"Prediksi jumlah sewa sepeda: {average_rental_count:.2f}")
+    fig3 = px.bar(total_users_by_working_day, 
+                    x='workingday', 
+                    y='cnt', 
+                    title='Penggunaan Sepeda berdasarkan Hari Kerja (1 = Ya, 0 = Tidak)',
+                    labels={'workingday': 'Hari Kerja', 'cnt': 'Total Pengguna'})
+        
+    st.plotly_chart(fig3)
+
+    st.subheader("Binning pada Jumlah Sepeda yang Digunakan")
+    bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    labels = ['0-50', '51-100', '101-150', '151-200', '201-250', 
+              '251-300', '301-350', '351-400', '401-450', '451-500']
+
+    data['binned_cnt'] = pd.cut(data['cnt'], bins=bins, labels=labels, right=False)
+
+    binned_counts = data['binned_cnt'].value_counts().sort_index()
+
+    st.write("Frekuensi Penggunaan Sepeda Berdasarkan Bin:")
+    st.bar_chart(binned_counts)
+
+    binned_counts_df = binned_counts.reset_index()  
+    binned_counts_df.columns = ['Bin Jumlah Pengguna', 'Frekuensi']  
+
+    fig2 = px.bar(binned_counts_df, 
+                   x='Bin Jumlah Pengguna', 
+                   y='Frekuensi', 
+                   title='Frekuensi Penggunaan Sepeda Berdasarkan Bin',
+                   labels={'Bin Jumlah Pengguna': 'Bin Jumlah Pengguna', 'Frekuensi': 'Frekuensi'})
+
+    st.plotly_chart(fig2)
 
 except Exception as e:
     st.error(f"Terjadi kesalahan: {e}")
