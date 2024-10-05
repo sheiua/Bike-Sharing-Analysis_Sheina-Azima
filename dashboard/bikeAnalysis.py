@@ -81,22 +81,18 @@ try:
     data_cleaned = data.dropna()
     data_cleaned = data_cleaned.drop_duplicates()
 
-    if 'PM2.5' in data_cleaned.columns:
-        data_cleaned = data_cleaned[data_cleaned['PM2.5'] <= 500]
+    # Pastikan ada kolom numerik sebelum menghitung korelasi
+    if not data_cleaned.select_dtypes(include=['number']).empty:
+        corr_matrix = data_cleaned.corr()  # Menggunakan data_cleaned untuk korelasi
+        st.write("Korelasi Antar Variabel Numerik:")
+        st.write(corr_matrix)
 
-    data_cleaned = data_cleaned.dropna(axis=1, how='all')
-
-    st.write("Lima Baris Pertama Data Bersih:")
-    st.write(data_cleaned.head())
-
-    st.write("Korelasi Antar Variabel Numerik:")
-    corr_matrix = data_cleaned.corr()  # Menggunakan data_cleaned untuk korelasi
-    st.write(corr_matrix)
-
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
-    plt.title('Korelasi Antar Variabel Numerik')
-    st.pyplot()
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
+        plt.title('Korelasi Antar Variabel Numerik')
+        st.pyplot()
+    else:
+        st.error("Data bersih tidak memiliki kolom numerik untuk menghitung korelasi.")
 
     st.write("Data Awal:")
     st.write(data.head())
