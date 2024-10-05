@@ -86,6 +86,11 @@ try:
     features = data_cleaned[['temperature', 'humidity', 'wind_speed', 'season']]
     target = data_cleaned['rental_count']
 
+    # Cek apakah kolom target ada
+    if 'rental_count' not in data_cleaned.columns:
+        st.error("Kolom 'rental_count' tidak ditemukan dalam data.")
+        st.stop()
+
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
 
