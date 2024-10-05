@@ -129,6 +129,9 @@ try:
     plt.title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
     st.pyplot(plt.gcf())
 
+    # Menyimpan nama kolom yang digunakan untuk pelatihan
+    feature_names = features.columns.tolist()
+
     # Prediksi cluster untuk input baru dari pengguna
     st.subheader("Prediksi Cluster untuk Input Baru")
     temp = st.number_input("Temperature (°C)", min_value=-10.0, max_value=50.0, value=20.0)
@@ -150,8 +153,13 @@ try:
     # Gabungkan data input baru dengan dummies
     new_data = pd.concat([new_data, season_dummies], axis=1)
 
+    # Pastikan semua kolom fitur yang digunakan untuk pelatihan ada
+    for col in feature_names:
+        if col not in new_data.columns:
+            new_data[col] = 0
+
     # Normalisasi data input baru
-    new_data_scaled = scaler.transform(new_data)
+    new_data_scaled = scaler.transform(new_data[feature_names])
 
     # Prediksi cluster
     predicted_cluster = kmeans.predict(new_data_scaled)
