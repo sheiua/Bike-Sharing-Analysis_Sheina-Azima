@@ -49,23 +49,15 @@ except pd.errors.ParserError:
 try:
     data = pd.concat([data_day, data_hour], ignore_index=True)
 
+    # Periksa dan ubah kolom tanggal jika ada
+    if 'date' in data.columns:
+        data['date'] = pd.to_datetime(data['date'], errors='coerce')
+        data.dropna(subset=['date'], inplace=True)
 
-    # Sisa kode tetap sama
- # Setelah membaca data
-st.write("Lima Baris Pertama dari Data:")
-st.write(data.head())
-st.write("Dimensi Data (Rows, Columns):", data.shape)
-
-# Periksa dan ubah kolom tanggal
-if 'date' in data.columns:
-    data['date'] = pd.to_datetime(data['date'], errors='coerce')
-    data.dropna(subset=['date'], inplace=True)
-
-st.write("Dimensi Data Setelah Memperbaiki Tanggal:", data.shape)
-
-# Lanjutkan dengan sisa analisis Anda
-# ...
-
+    # Tampilkan informasi dan analisis data
+    st.write("Lima Baris Pertama dari Data:")
+    st.write(data.head())
+    st.write("Dimensi Data (Rows, Columns):", data.shape)
     st.write("Informasi Data:")
     st.write(data.info())
     st.write("Statistik Deskriptif:")
@@ -106,7 +98,6 @@ st.write("Dimensi Data Setelah Memperbaiki Tanggal:", data.shape)
     st.write("Total Pengguna Terdaftar:", data['registered'].sum())
 
     st.subheader("Perbandingan Penggunaan Sepeda antara Hari Kerja dan Hari Libur")
-
     total_users_by_working_day = data.groupby('workingday')['cnt'].sum().reset_index()
 
     st.write("Total Pengguna Berdasarkan Hari Kerja dan Hari Libur:")
