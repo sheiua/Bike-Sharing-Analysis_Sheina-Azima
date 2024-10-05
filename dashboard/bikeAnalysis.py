@@ -7,9 +7,6 @@ import seaborn as sns
 import os
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
 
 pio.templates.default = "plotly_white"
 
@@ -70,6 +67,18 @@ try:
     # Membersihkan data
     data_cleaned = data.dropna().drop_duplicates()
 
+    # Menampilkan tipe data setelah pembersihan
+    st.write("Tipe data setelah pembersihan:")
+    st.write(data_cleaned.dtypes)
+
+    # Menampilkan beberapa baris dari data bersih
+    st.write("Beberapa baris dari data bersih:")
+    st.write(data_cleaned.head())
+
+    # Memeriksa info DataFrame
+    st.write("Informasi DataFrame:")
+    st.write(data_cleaned.info())
+
     # Korelasi variabel numerik
     if not data_cleaned.select_dtypes(include=['number']).empty:
         corr_matrix = data_cleaned.corr()
@@ -100,27 +109,21 @@ try:
     # Clustering
     st.subheader("Clustering Penggunaan Sepeda berdasarkan Faktor Lingkungan dan Musim")
     
-    # Mempersiapkan fitur dan label untuk model
-    X = data[['temp', 'hum', 'windspeed', 'season']]
+    # Pilih fitur yang relevan untuk clustering
+    features = data[['temp', 'hum', 'windspeed', 'season']]
     
-    # Membangun pipeline dengan OneHotEncoder
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('season', OneHotEncoder(drop='first', handle_unknown='ignore'), ['season']),
-            ('num', 'passthrough', ['temp', 'hum', 'windspeed'])
-        ])
+    # One-hot encoding untuk season (musim)
+    features = pd.get_dummies(features, columns=['season'], drop_first=True)
+    
+    # Normalisasi fitur
+    scaler = StandardScaler()
+    features_scaled = scaler.fit_transform(features)
 
-    # Membangun pipeline
-    pipeline = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('kmeans', KMeans(n_clusters=4, random_state=42))
-    ])
-
-    # Fit model
-    pipeline.fit(X)
+    # K-Means clustering
+    kmeans = KMeans(n_clusters=4, random_state=42)
+    data['cluster'] = kmeans.fit_predict(features_scaled)
 
     # Visualisasi clustering
-    data['cluster'] = pipeline.predict(X)
     plt.figure(figsize=(10, 6))
     sns.scatterplot(data=data, x='temp', y='cnt', hue='cluster', palette='viridis')
     plt.title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
@@ -133,16 +136,24 @@ try:
     windspeed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
     season = st.selectbox("Season", ['spring', 'summer', 'fall', 'winter'])
 
+    # Encode season untuk input pengguna
+    season_dummies = pd.get_dummies([season], columns=['season'], drop_first=True)
+    season_dummies = season_dummies.reindex(columns=['season_summer', 'season_fall', 'season_winter'], fill_value=0)
+
     # Data input baru
     new_data = pd.DataFrame({
         'temp': [temp],
         'hum': [hum],
-        'windspeed': [windspeed],
-        'season': [season]
+        'windspeed': [windspeed]
     })
 
+    new_data = pd.concat([new_data, season_dummies], axis=1)
+
+    # Normalisasi data input baru
+    new_data_scaled = scaler.transform(new_data)
+
     # Prediksi cluster
-    predicted_cluster = pipeline.predict(new_data)
+    predicted_cluster = kmeans.predict(new_data_scaled)
     st.write(f"Data baru diprediksi berada di cluster: {predicted_cluster[0]}")
 
     st.write("Lima contoh dari cluster yang sama:")
