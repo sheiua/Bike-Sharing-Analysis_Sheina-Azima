@@ -14,49 +14,41 @@ st.title('Analisis Penggunaan Sepeda')
 st.write("Current Working Directory: ", os.getcwd())
 
 # Jalur ke file CSV
-file_path = os.path.join("C:", "Users", "User", "Downloads", "Bike Sharing Analysis", "day.csv")
+file_path_day = os.path.join("dashboard", "day.csv")
+file_path_hour = os.path.join("dashboard", "hour.csv")
 
 # Membaca file day.csv
 try:
-    data_day = pd.read_csv(file_path)
+    data_day = pd.read_csv(file_path_day)
     st.write("Data hari berhasil dimuat.")
 except FileNotFoundError:
-    st.error(f"File {file_path} tidak ditemukan. Pastikan jalur file sudah benar.")
-    st.stop()  # Menghentikan eksekusi jika file tidak ditemukan
+    st.error(f"File {file_path_day} tidak ditemukan. Pastikan jalur file sudah benar.")
+    st.stop()
 except pd.errors.EmptyDataError:
     st.error("File tidak memiliki data. Periksa file CSV.")
-    st.stop()  # Menghentikan eksekusi jika file kosong
+    st.stop()
 except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
-    st.stop()  # Menghentikan eksekusi jika ada kesalahan parsing
+    st.stop()
 
 # Membaca file hour.csv
-file_hour_path = os.path.join("C:", "Users", "User", "Downloads", "Bike Sharing Analysis", "hour.csv")
 try:
-    data_hour = pd.read_csv(file_hour_path)
+    data_hour = pd.read_csv(file_path_hour)
     st.write("Data jam berhasil dimuat.")
 except FileNotFoundError:
-    st.error(f"File {file_hour_path} tidak ditemukan. Pastikan jalur file sudah benar.")
-    st.stop()  # Menghentikan eksekusi jika file tidak ditemukan
+    st.error(f"File {file_path_hour} tidak ditemukan. Pastikan jalur file sudah benar.")
+    st.stop()
 except pd.errors.EmptyDataError:
     st.error("File tidak memiliki data. Periksa file CSV.")
-    st.stop()  # Menghentikan eksekusi jika file kosong
+    st.stop()
 except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
-    st.stop()  # Menghentikan eksekusi jika ada kesalahan parsing
+    st.stop()
 
 # Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
 try:
     data = pd.concat([data_day, data_hour], ignore_index=True)
-    st.write("Data berhasil digabungkan.")
-except Exception as e:
-    st.error(f"Terjadi kesalahan saat menggabungkan data: {e}")
-    st.stop()  # Menghentikan eksekusi jika terjadi kesalahan
 
-
-# Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
-try:
-    data = pd.concat([data_day, data_hour], ignore_index=True)
 
     # Sisa kode tetap sama
     st.write("Lima Baris Pertama dari Data:")
