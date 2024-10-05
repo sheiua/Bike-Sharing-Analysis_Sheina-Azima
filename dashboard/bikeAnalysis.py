@@ -114,7 +114,7 @@ try:
     
     # One-hot encoding untuk season (musim)
     features = pd.get_dummies(features, columns=['season'], drop_first=True)
-    
+
     # Normalisasi fitur
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(features)
@@ -158,6 +158,31 @@ try:
 
     st.write("Lima contoh dari cluster yang sama:")
     st.write(data[data['cluster'] == predicted_cluster[0]].sample(5))
+
+    # Menyimpan model KMeans untuk digunakan di lain waktu (opsional)
+    import joblib
+    joblib.dump(kmeans, 'kmeans_model.pkl')
+    st.write("Model KMeans telah disimpan.")
+
+    # Membaca kembali model KMeans (opsional)
+    if st.button("Muat KMeans Model"):
+        loaded_kmeans = joblib.load('kmeans_model.pkl')
+        st.write("Model KMeans berhasil dimuat.")
+
+    # Visualisasi lain
+    st.subheader("Visualisasi Jumlah Penyewaan per Musim")
+    rental_per_season = data.groupby('season')['cnt'].sum().reset_index()
+    fig_season = px.bar(rental_per_season, 
+                        x='season', 
+                        y='cnt', 
+                        title='Jumlah Penyewaan per Musim',
+                        labels={'season': 'Musim', 'cnt': 'Total Penyewaan'})
+    st.plotly_chart(fig_season)
+
+    # Menyimpan data bersih ke file CSV
+    cleaned_file_path = os.path.join("dashboard", "cleaned_data.csv")
+    data_cleaned.to_csv(cleaned_file_path, index=False)
+    st.write(f"Data bersih disimpan di: {cleaned_file_path}")
 
 except Exception as e:
     st.error(f"Terjadi kesalahan: {e}")
