@@ -106,7 +106,7 @@ try:
     # Membangun pipeline dengan OneHotEncoder
     preprocessor = ColumnTransformer(
         transformers=[
-            ('season', OneHotEncoder(drop='first'), ['season']),
+            ('season', OneHotEncoder(drop='first', handle_unknown='ignore'), ['season']),
             ('num', 'passthrough', ['temp', 'hum', 'windspeed'])
         ])
 
