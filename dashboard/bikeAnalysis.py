@@ -51,9 +51,21 @@ try:
 
 
     # Sisa kode tetap sama
-    st.write("Lima Baris Pertama dari Data:")
-    st.write(data.head())
-    st.write("Dimensi Data (Rows, Columns):", data.shape)
+ # Setelah membaca data
+st.write("Lima Baris Pertama dari Data:")
+st.write(data.head())
+st.write("Dimensi Data (Rows, Columns):", data.shape)
+
+# Periksa dan ubah kolom tanggal
+if 'date' in data.columns:
+    data['date'] = pd.to_datetime(data['date'], errors='coerce')
+    data.dropna(subset=['date'], inplace=True)
+
+st.write("Dimensi Data Setelah Memperbaiki Tanggal:", data.shape)
+
+# Lanjutkan dengan sisa analisis Anda
+# ...
+
     st.write("Informasi Data:")
     st.write(data.info())
     st.write("Statistik Deskriptif:")
