@@ -5,11 +5,6 @@ import plotly.io as pio
 import streamlit as st
 import matplotlib.pyplot as plt  
 import seaborn as sns 
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 import os
 
 pio.templates.default = "plotly_white"
@@ -82,39 +77,14 @@ try:
     st.write("Data Awal:")
     st.write(data.head())
 
-    # Model prediksi
-    features = data_cleaned[['temperature', 'humidity', 'wind_speed', 'season']]
-    target = data_cleaned['rental_count']
+    # Hitung rata-rata untuk memberikan prediksi sederhana
+    average_rental_count = data_cleaned['rental_count'].mean()
+    st.write(f"Rata-rata jumlah sewa sepeda: {average_rental_count:.2f}")
 
-    # Cek apakah kolom target ada
-    if 'rental_count' not in data_cleaned.columns:
-        st.error("Kolom 'rental_count' tidak ditemukan dalam data.")
-        st.stop()
+    # Streamlit app untuk prediksi sederhana
+    st.subheader("Prediksi Jumlah Sewa Sepeda (Sederhana)")
 
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
-
-    # Preprocessing: One-hot encoding for categorical features
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('cat', OneHotEncoder(), ['season']),
-            ('num', 'passthrough', ['temperature', 'humidity', 'wind_speed'])
-        ]
-    )
-
-    # Create a pipeline with preprocessing and linear regression
-    pipeline = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('regressor', LinearRegression())
-    ])
-
-    # Fit the model
-    pipeline.fit(X_train, y_train)
-
-    # Streamlit app for prediction
-    st.subheader("Prediksi Jumlah Sewa Sepeda")
-
-    # User input for features
+    # User input untuk fitur
     temperature = st.number_input("Temperature (°C)", min_value=-30.0, max_value=50.0, value=20.0)
     humidity = st.number_input("Humidity (%)", min_value=0, max_value=100, value=30)
     wind_speed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
@@ -122,15 +92,8 @@ try:
 
     # Prediction button
     if st.button("Predict"):
-        new_data = pd.DataFrame({
-            'temperature': [temperature],
-            'humidity': [humidity],
-            'wind_speed': [wind_speed],
-            'season': [season]
-        })
-
-        predicted_count = pipeline.predict(new_data)
-        st.write(f"Predicted bike rental count: {predicted_count[0]:.2f}")
+        # Menggunakan rata-rata sebagai prediksi sederhana
+        st.write(f"Prediksi jumlah sewa sepeda: {average_rental_count:.2f}")
 
 except Exception as e:
     st.error(f"Terjadi kesalahan: {e}")
