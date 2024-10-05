@@ -8,6 +8,10 @@ import seaborn as sns
 
 pio.templates.default = "plotly_white"
 
+import os
+
+print("Current Working Directory: ", os.getcwd())
+
 st.title('Analisis Penggunaan Sepeda')
 file_path = os.path.join("C:", "Users", "User", "Downloads", "Bike Sharing Analysis", "day.csv")
 
