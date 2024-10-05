@@ -51,8 +51,16 @@ try:
 
     # Periksa dan ubah kolom tanggal jika ada
     if 'date' in data.columns:
-        data['date'] = pd.to_datetime(data['date'], errors='coerce')
+        data['date'] = pd.to_datetime(data['date'], errors='coerce')  # Ubah menjadi datetime
         data.dropna(subset=['date'], inplace=True)
+
+    # Pastikan kolom numerik lainnya tidak mengandung string
+    numeric_columns = data.select_dtypes(include=['object']).columns
+    for col in numeric_columns:
+        try:
+            data[col] = pd.to_numeric(data[col], errors='coerce')  # Coba konversi ke numerik
+        except Exception as e:
+            st.error(f"Kesalahan saat mengonversi kolom {col}: {e}")
 
     # Tampilkan informasi dan analisis data
     st.write("Lima Baris Pertama dari Data:")
@@ -82,7 +90,7 @@ try:
     st.write(data_cleaned.head())
 
     st.write("Korelasi Antar Variabel Numerik:")
-    corr_matrix = data.corr()
+    corr_matrix = data_cleaned.corr()  # Menggunakan data_cleaned untuk korelasi
     st.write(corr_matrix)
 
     plt.figure(figsize=(10, 8))
