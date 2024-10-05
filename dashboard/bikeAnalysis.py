@@ -71,10 +71,10 @@ try:
     if not data_cleaned.select_dtypes(include=['number']).empty:
         corr_matrix = data_cleaned.corr()
         st.write("Korelasi Antar Variabel Numerik:")
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
-        plt.title('Korelasi Antar Variabel Numerik')
-        st.pyplot()
+        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5, ax=ax_corr)
+        ax_corr.set_title('Korelasi Antar Variabel Numerik')
+        st.pyplot(fig_corr)
     else:
         st.error("Data bersih tidak memiliki kolom numerik untuk menghitung korelasi.")
 
@@ -112,10 +112,10 @@ try:
     data['cluster'] = kmeans.fit_predict(features_scaled)
 
     # Visualisasi clustering
-    plt.figure(figsize=(10, 6))
-    sns.scatterplot(data=data, x='temp', y='cnt', hue='cluster', palette='viridis')
-    plt.title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
-    st.pyplot(plt.gcf())
+    fig_cluster, ax_cluster = plt.subplots(figsize=(10, 6))
+    sns.scatterplot(data=data, x='temp', y='cnt', hue='cluster', palette='viridis', ax=ax_cluster)
+    ax_cluster.set_title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
+    st.pyplot(fig_cluster)
 
     # Prediksi cluster untuk input baru dari pengguna
     st.subheader("Prediksi Cluster untuk Input Baru")
