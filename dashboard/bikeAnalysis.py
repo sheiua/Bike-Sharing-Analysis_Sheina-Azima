@@ -5,10 +5,12 @@ import streamlit as st
 import matplotlib.pyplot as plt  
 import seaborn as sns 
 import os
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 pio.templates.default = "plotly_white"
 
-st.title('Analisis Penggunaan Sepeda')
+st.title('Analisis Penggunaan Sepeda dan Clustering')
 
 # Menampilkan direktori kerja saat ini
 st.write("Current Working Directory: ", os.getcwd())
@@ -45,48 +47,30 @@ except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
     st.stop()
 
-# Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
+# Menggabungkan data dari kedua file
 try:
     data = pd.concat([data_day, data_hour], ignore_index=True)
 
-    # Periksa dan ubah kolom tanggal jika ada
+    # Mengubah kolom 'date' menjadi datetime jika ada
     if 'date' in data.columns:
-        data['date'] = pd.to_datetime(data['date'], errors='coerce')  # Ubah menjadi datetime
+        data['date'] = pd.to_datetime(data['date'], errors='coerce')
         data.dropna(subset=['date'], inplace=True)
 
     # Pastikan kolom numerik lainnya tidak mengandung string
     numeric_columns = data.select_dtypes(include=['object']).columns
     for col in numeric_columns:
         try:
-            data[col] = pd.to_numeric(data[col], errors='coerce')  # Coba konversi ke numerik
+            data[col] = pd.to_numeric(data[col], errors='coerce')  
         except Exception as e:
             st.error(f"Kesalahan saat mengonversi kolom {col}: {e}")
 
-    # Tampilkan informasi dan analisis data
-    st.write("Lima Baris Pertama dari Data:")
-    st.write(data.head())
-    st.write("Dimensi Data (Rows, Columns):", data.shape)
-    st.write("Informasi Data:")
-    st.write(data.info())
-    st.write("Statistik Deskriptif:")
-    st.write(data.describe())
-    st.write("Jumlah Missing Values per Kolom:")
-    st.write(data.isnull().sum())
-    st.write("Jumlah Nilai Unik per Kolom:")
-    st.write(data.nunique())
+    # Membersihkan data
+    data_cleaned = data.dropna().drop_duplicates()
 
-    if 'Unnamed' in data.columns:
-        data = data.drop(columns=['Unnamed'])
-
-    data_cleaned = data.dropna()
-    data_cleaned = data_cleaned.drop_duplicates()
-
-    # Pastikan ada kolom numerik sebelum menghitung korelasi
+    # Korelasi variabel numerik
     if not data_cleaned.select_dtypes(include=['number']).empty:
-        corr_matrix = data_cleaned.corr()  # Menggunakan data_cleaned untuk korelasi
+        corr_matrix = data_cleaned.corr()
         st.write("Korelasi Antar Variabel Numerik:")
-        st.write(corr_matrix)
-
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
         plt.title('Korelasi Antar Variabel Numerik')
@@ -94,49 +78,74 @@ try:
     else:
         st.error("Data bersih tidak memiliki kolom numerik untuk menghitung korelasi.")
 
-    st.write("Data Awal:")
-    st.write(data.head())
-
+    # Analisis jumlah pengguna kasual vs terdaftar
     st.subheader("Jumlah Pengguna Kasual vs Terdaftar")
     st.write("Total Pengguna Kasual:", data['casual'].sum())
     st.write("Total Pengguna Terdaftar:", data['registered'].sum())
 
+    # Analisis penggunaan sepeda pada hari kerja vs hari libur
     st.subheader("Perbandingan Penggunaan Sepeda antara Hari Kerja dan Hari Libur")
     total_users_by_working_day = data.groupby('workingday')['cnt'].sum().reset_index()
 
-    st.write("Total Pengguna Berdasarkan Hari Kerja dan Hari Libur:")
-    st.write(total_users_by_working_day)
-
     fig3 = px.bar(total_users_by_working_day, 
-                    x='workingday', 
-                    y='cnt', 
-                    title='Penggunaan Sepeda berdasarkan Hari Kerja (1 = Ya, 0 = Tidak)',
-                    labels={'workingday': 'Hari Kerja', 'cnt': 'Total Pengguna'})
-        
+                  x='workingday', 
+                  y='cnt', 
+                  title='Penggunaan Sepeda berdasarkan Hari Kerja (1 = Ya, 0 = Tidak)',
+                  labels={'workingday': 'Hari Kerja', 'cnt': 'Total Pengguna'})
     st.plotly_chart(fig3)
 
-    st.subheader("Binning pada Jumlah Sepeda yang Digunakan")
-    bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-    labels = ['0-50', '51-100', '101-150', '151-200', '201-250', 
-              '251-300', '301-350', '351-400', '401-450', '451-500']
+    # Clustering
+    st.subheader("Clustering Penggunaan Sepeda berdasarkan Faktor Lingkungan dan Musim")
+    
+    # Pilih fitur yang relevan untuk clustering
+    features = data[['temp', 'hum', 'windspeed', 'season']]
+    
+    # One-hot encoding untuk season (musim)
+    features = pd.get_dummies(features, columns=['season'], drop_first=True)
+    
+    # Normalisasi fitur
+    scaler = StandardScaler()
+    features_scaled = scaler.fit_transform(features)
 
-    data['binned_cnt'] = pd.cut(data['cnt'], bins=bins, labels=labels, right=False)
+    # K-Means clustering
+    kmeans = KMeans(n_clusters=4, random_state=42)
+    data['cluster'] = kmeans.fit_predict(features_scaled)
 
-    binned_counts = data['binned_cnt'].value_counts().sort_index()
+    # Visualisasi clustering
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(data=data, x='temp', y='cnt', hue='cluster', palette='viridis')
+    plt.title("Clustering berdasarkan Suhu dan Jumlah Penyewaan")
+    st.pyplot(plt.gcf())
 
-    st.write("Frekuensi Penggunaan Sepeda Berdasarkan Bin:")
-    st.bar_chart(binned_counts)
+    # Prediksi cluster untuk input baru dari pengguna
+    st.subheader("Prediksi Cluster untuk Input Baru")
+    temp = st.number_input("Temperature (°C)", min_value=-10.0, max_value=50.0, value=20.0)
+    hum = st.number_input("Humidity (%)", min_value=0, max_value=100, value=30)
+    windspeed = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=100.0, value=10.0)
+    season = st.selectbox("Season", ['spring', 'summer', 'fall', 'winter'])
 
-    binned_counts_df = binned_counts.reset_index()  
-    binned_counts_df.columns = ['Bin Jumlah Pengguna', 'Frekuensi']  
+    # Encode season untuk input pengguna
+    season_dummies = pd.get_dummies([season], columns=['season'], drop_first=True)
+    season_dummies = season_dummies.reindex(columns=['season_summer', 'season_fall', 'season_winter'], fill_value=0)
 
-    fig2 = px.bar(binned_counts_df, 
-                   x='Bin Jumlah Pengguna', 
-                   y='Frekuensi', 
-                   title='Frekuensi Penggunaan Sepeda Berdasarkan Bin',
-                   labels={'Bin Jumlah Pengguna': 'Bin Jumlah Pengguna', 'Frekuensi': 'Frekuensi'})
+    # Data input baru
+    new_data = pd.DataFrame({
+        'temp': [temp],
+        'hum': [hum],
+        'windspeed': [windspeed]
+    })
 
-    st.plotly_chart(fig2)
+    new_data = pd.concat([new_data, season_dummies], axis=1)
+
+    # Normalisasi data input baru
+    new_data_scaled = scaler.transform(new_data)
+
+    # Prediksi cluster
+    predicted_cluster = kmeans.predict(new_data_scaled)
+    st.write(f"Data baru diprediksi berada di cluster: {predicted_cluster[0]}")
+
+    st.write("Lima contoh dari cluster yang sama:")
+    st.write(data[data['cluster'] == predicted_cluster[0]].sample(5))
 
 except Exception as e:
     st.error(f"Terjadi kesalahan: {e}")
