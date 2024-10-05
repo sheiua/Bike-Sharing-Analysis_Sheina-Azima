@@ -67,14 +67,6 @@ try:
     # Membersihkan data
     data_cleaned = data.dropna().drop_duplicates()
 
-    # Menampilkan tipe data setelah pembersihan
-    st.write("Tipe data setelah pembersihan:")
-    st.write(data_cleaned.dtypes)
-
-    # Menampilkan beberapa baris dari data bersih
-    st.write("Beberapa baris dari data bersih:")
-    st.write(data_cleaned.head())
-
     # Memeriksa info DataFrame
     st.write("Informasi DataFrame:")
     st.write(data_cleaned.info())
