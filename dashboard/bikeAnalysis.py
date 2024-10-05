@@ -16,8 +16,19 @@ st.write("Current Working Directory: ", os.getcwd())
 # Jalur ke file CSV
 file_path = os.path.join("C:", "Users", "User", "Downloads", "Bike Sharing Analysis", "day.csv")
 
-data_day = pd.read_csv(dashboard/day.csv)
-
+# Membaca file day.csv
+try:
+    data_day = pd.read_csv(file_path)
+    st.write("Data hari berhasil dimuat.")
+except FileNotFoundError:
+    st.error(f"File {file_path} tidak ditemukan. Pastikan jalur file sudah benar.")
+    st.stop()  # Menghentikan eksekusi jika file tidak ditemukan
+except pd.errors.EmptyDataError:
+    st.error("File tidak memiliki data. Periksa file CSV.")
+    st.stop()  # Menghentikan eksekusi jika file kosong
+except pd.errors.ParserError:
+    st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
+    st.stop()  # Menghentikan eksekusi jika ada kesalahan parsing
 
 # Membaca file hour.csv
 file_hour_path = os.path.join("C:", "Users", "User", "Downloads", "Bike Sharing Analysis", "hour.csv")
@@ -33,6 +44,15 @@ except pd.errors.EmptyDataError:
 except pd.errors.ParserError:
     st.error("Kesalahan saat mem-parsing file CSV. Pastikan format file benar.")
     st.stop()  # Menghentikan eksekusi jika ada kesalahan parsing
+
+# Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
+try:
+    data = pd.concat([data_day, data_hour], ignore_index=True)
+    st.write("Data berhasil digabungkan.")
+except Exception as e:
+    st.error(f"Terjadi kesalahan saat menggabungkan data: {e}")
+    st.stop()  # Menghentikan eksekusi jika terjadi kesalahan
+
 
 # Jika kedua file berhasil dibaca, lanjutkan dengan menggabungkan data
 try:
